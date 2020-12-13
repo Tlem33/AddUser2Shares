@@ -1,10 +1,6 @@
-:: AddUser2Shares.cmd créé par Thierry Lemarchand
-:: Ce batch ajoute ou supprime un utilisateur dans le
-:: système et/ou sur un ou plusieurs partages ainsi que
-:: les informations d'identification pour le client.
-::
-:: Version 1.3 du 10/03/2020
-:: Lire le fichier LisezMoi.txt pour plus d'informations.
+:: AddUser2Shares.cmd
+:: Version 1.4 du 13/12/2020 - Par Tlem33
+:: https://github.com/Tlem33/AddUser2Shares
 ::
 
 @Echo Off
@@ -24,7 +20,7 @@ Set Server=Serveur
 Set Version=1.3
 
 :: Déclaration des variables d'exécutables avec chemin.
-Set SubinaclExe="%~DP0Res\subinacl.exe"
+Set SubinaclExe="%~DP0bin\subinacl.exe"
 Set IcaclsExe="%WINDIR%\System32\Icacls.exe"
 Set NetExe="%WINDIR%\System32\Net.exe"
 Set RegExe="%WINDIR%\System32\Reg.exe"
