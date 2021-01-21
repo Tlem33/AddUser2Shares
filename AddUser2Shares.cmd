@@ -1,6 +1,10 @@
-:: AddUser2Shares.cmd
-:: Version 1.4 du 13/12/2020 - Par Tlem33
-:: https://github.com/Tlem33/AddUser2Shares
+:: AddUser2Shares.cmd créé par Tlem33
+:: Ce batch ajoute ou supprime un utilisateur dans le
+:: système et/ou sur un ou plusieurs partages ainsi que
+:: les informations d'identification pour le client.
+::
+:: Version 1.5 du 21/01/2021
+:: Lire le fichier README.md pour plus d'informations.
 ::
 
 @Echo Off
@@ -12,26 +16,27 @@ Cls
 :: Entrez ici les paramètres du compte de l'utilisateur et du serveur
 Set User=AdminHSF
 Set Pass=HenrySchein37
-Set FullName=Administrateur HSF
+Set FullName=Administrateur Henry Schein
 Set Server=Serveur
 :: ================================================================================
 
+:: Déclaration des variables
+:: ================================================================================
 :: Version :
-Set Version=1.3
+Set Version=1.5
 
-:: Déclaration des variables d'exécutables avec chemin.
+:: Ajout des chemins vers System32, wbem et Powershell au path (au cas ou)
+SET "PATH=%PATH%;%WINDIR%\System32;%WINDIR%\System32\wbem;%WINDIR%\System32\WindowsPowerShell\v1.0"
+
 Set SubinaclExe="%~DP0bin\subinacl.exe"
-Set IcaclsExe="%WINDIR%\System32\Icacls.exe"
-Set NetExe="%WINDIR%\System32\Net.exe"
-Set RegExe="%WINDIR%\System32\Reg.exe"
-Set WmicExe="%WINDIR%\System32\wbem\Wmic.exe"
-Title=AddUser2Shares version %version%
+Set Title=AddUser2Shares version %version%
+:: ================================================================================
 
 :: On appelle la fonction de tests
 Call :Tests
 
 :: On demande les droits admin.
-Net.exe session 1>NUL 2>NUL || (Powershell start-process """%~dpnx0""" -verb RunAs & Exit /b 1)
+Net.exe session 1>NUL 2>NUL || (Powershell start-process """%~dpnx0""" "%*" -verb RunAs & Exit /b 1)
 
 ::mode con cols=80 lines=25
 :Menu1
@@ -61,13 +66,13 @@ Echo          5 - Raccourcis utiles
 Echo.
 Echo          6 - Quitter
 Echo.
-Set /P Ret=Entrez votre choix (1, 2, 3, 4, 5 ou 6) :
-If /I "%Ret%" EQU "1" Goto :AddUser
-If /I "%Ret%" EQU "2" Goto :Add2Share
-If /I "%Ret%" EQU "3" Goto :DelUser
-If /I "%Ret%" EQU "4" Goto :Menu2
-If /I "%Ret%" EQU "5" Goto :Menu3
-If /I "%Ret%" EQU "6" Exit
+Choice /C 123456 /M "Entrez votre choix :"
+If Errorlevel 6 Exit
+If Errorlevel 5 Goto :Menu3
+If Errorlevel 4 Goto :Menu2
+If Errorlevel 3 Goto :DelUser
+If Errorlevel 2 Goto :Add2Share
+If Errorlevel 1 Goto :AddUser
 Goto :Menu1
 
 
@@ -98,13 +103,13 @@ Echo          5 - Menu pr‚c‚dent
 Echo.
 Echo          6 - Quitter
 Echo.
-Set /P Ret=Entrez votre choix (1, 2, 3, 4 ou 5) :
-If /I "%Ret%" EQU "1" Goto :CredentialAdd
-If /I "%Ret%" EQU "2" Goto :CredentialDel
-If /I "%Ret%" EQU "3" Goto :CredentialVue
-If /I "%Ret%" EQU "4" Goto :CredentialManager
-If /I "%Ret%" EQU "5" Goto Menu1
-If /I "%Ret%" EQU "6" Exit
+Choice /C 123456 /M "Entrez votre choix :"
+If Errorlevel 6 Exit
+If Errorlevel 5 Goto :Menu1
+If Errorlevel 4 Goto :CredentialManager
+If Errorlevel 3 Goto :CredentialVue
+If Errorlevel 2 Goto :CredentialDel
+If Errorlevel 1 Goto :CredentialAdd
 Goto :Menu2
 
 :Menu3
@@ -132,18 +137,18 @@ Echo          4 - Menu pr‚c‚dent
 Echo.
 Echo          5 - Quitter
 Echo.
-Set /P Ret=Entrez votre choix (1, 2, 3, 4 ou 5) :
-If /I "%Ret%" EQU "1" Start "lusrmgr.msc" lusrmgr.msc
-If /I "%Ret%" EQU "2" Start "fsmgmt.msc" fsmgmt.msc
-If /I "%Ret%" EQU "3" Start "ncpa.cpl" ncpa.cpl
-If /I "%Ret%" EQU "4" Goto :Menu1
-If /I "%Ret%" EQU "5" Exit
+Choice /C 12345 /M "Entrez votre choix :"
+If Errorlevel 5 Exit
+If Errorlevel 4 Goto :Menu1
+If Errorlevel 3 Start "ncpa.cpl" ncpa.cpl
+If Errorlevel 2 Start "fsmgmt.msc" fsmgmt.msc
+If Errorlevel 1 Start "lusrmgr.msc" lusrmgr.msc
 Goto :Menu3
 
 
 :CredentialVue
 Cls
-cmdkey /list
+cmdkey.exe /list
 Echo Appuyez sur une touche pour revenir au menu.
 Pause>Nul
 Goto :Menu2
@@ -167,7 +172,7 @@ Echo          Nom du Serveur : %Server%
 Echo.
 Echo Appuyez sur une touche pour confirmer l'ajout de ces informations.
 Pause>Nul
-cmdkey /add:%Server% /user:%User% /pass:%Pass%
+cmdkey.exe /add:%Server% /user:%User% /pass:%Pass%
 Echo.
 Echo Op‚ration termin‚e.
 Echo Appuyez sur une touche pour revenir au menu.
@@ -186,7 +191,7 @@ Echo          Nom du Serveur : %Server%
 Echo.
 Echo Appuyez sur une touche pour confirmer la suppression.
 Pause>Nul
-cmdkey /delete:%Server%
+cmdkey.exe /delete:%Server%
 Echo.
 Echo Op‚ration termin‚e.
 Echo Appuyez sur une touche pour revenir au menu.
@@ -197,7 +202,7 @@ Goto Menu2
 :AddUser
 Cls
 :: Test si le compte existe déjà.
-Net User "%User%">Nul 2>Nul
+Net.exe User "%User%">Nul 2>Nul
 If %errorlevel% EQU 0 (
 	Call :InfoTitle
 	Echo Le Compte "%User%" existe d‚ja !
@@ -224,25 +229,25 @@ Call :Pause
 
 :: Ajout du compte utilisateur - Pas d'expiration et ne peux pas changer le mot de passe.
 Echo Ajout de l'utilisateur "%User%" :
-%NetExe% User "%User%" "%Pass%" /ADD /FULLNAME:"%FullName%" /EXPIRES:NEVER /PASSWORDCHG:NO
+Net.exe User "%User%" "%Pass%" /ADD /FULLNAME:"%FullName%" /EXPIRES:NEVER /PASSWORDCHG:NO
 :: Ajout de l'utilisateur "%User%" dans le groupe Administrateur
 Echo Ajout de l'utilisateur dans le groupe "Administrateur" :
-%NetExe% localgroup Administrateurs "%User%" /ADD
+Net.exe localgroup Administrateurs "%User%" /ADD
 :: "%WINDIR%\System32\Net.exe" accounts /MAXPWAGE:UNLIMITED
 
 :: Désactivation de l'expiration du mot de passe.
 Echo D‚sactivation de l'expiration du mot de passe :
-%WmicExe% UserAccount where Name='%User%' set PasswordExpires=False
+Wmic.exe UserAccount where Name='%User%' set PasswordExpires=False
 Echo.
 
 :: Cache le compte sur l'ouverture de session.
 Echo Masque le compte utilisateur sur l'ouverture de session :
-%RegExe% ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /V "%User%" /T REG_DWORD /D "0" /F
+Reg.exe ADD "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /V "%User%" /T REG_DWORD /D "0" /F
 :: Commande pour afficher le compte.
-:: %RegExe% DELETE "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /V "Administrateur" /F
+:: Reg.exe DELETE "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /V "Administrateur" /F
 
 :: Test si l'utilisateur à bien été créé.
-%NetExe% User "%User%">Nul 2>Nul
+Net.exe User "%User%">Nul 2>Nul
 If %errorlevel% NEQ 0 (
 	Call :ErrorTitle
 	Echo Compte "%User%" non cr‚‚ !
@@ -256,13 +261,13 @@ If %errorlevel% NEQ 0 (
 Call :SuccessTitle
 Echo L'utilisateur "%User%" a bien ‚t‚ ajout‚.
 Call :Pause
-
 Goto :Menu1
+
 
 :DelUser
 Cls
 :: Test si le compte existe.
-Net User "%User%">Nul 2>Nul
+Net.exe User "%User%">Nul 2>Nul
 If %errorlevel% NEQ 0 (
 	Call :InfoTitle
 	Echo Le Compte "%User%" n'existe pas !
@@ -280,25 +285,25 @@ Echo Ce compte utilisateur sera aussi supprim‚ de tous les partages du systŠme.
 Call :Pause
 
 :: Cette boucle permet de lister noms et chemins des partages au format csv et de filtrer ceux avec le "$"
-For /f "Skip=2 Tokens=1,2,3 Delims=," %%a In ('wmic share get name^,path /format:csv ^| findstr /i /l /v "$"') Do (
+For /f "Skip=2 Tokens=1,2,3 Delims=," %%a In ('wmic.exe share get name^,path /format:csv ^| findstr /i /l /v "$"') Do (
 	If "%%a" NEQ "" Call :RemoveUserOnShare "%%b" "%%c"
 )
 Echo.
 
 :: Suppression du compte utilisateur
 Echo Suppression de l'utilisateur.
-Net User "%User%" /DELETE
+Net.exe User "%User%" /DELETE
 
 :: Supprime la clé de registre inutile.
 Echo Suppression de la cl‚ "%User%" dans "SpecialAccounts"
-REG DELETE "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /V "%User%" /F
+Reg.exe DELETE "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /V "%User%" /F
 Echo.
 
 :: Pause de 3 secondes.
 Ping -n 2 127.0.0.1>Nul
 
 :: On vérifie si le compte utilisateur a été supprimé.
-Net User "%User%">Nul 2>Nul
+Net.exe User "%User%">Nul 2>Nul
 If %errorlevel% EQU 0 (
 	Call :ErrorTitle
 	Echo Compte "%User%" toujours existant !
@@ -317,7 +322,7 @@ Goto :Menu1
 :Add2Share
 Cls
 :: Test si le compte existe.
-Net User "%User%">Nul 2>Nul
+Net.exe User "%User%">Nul 2>Nul
 If %errorlevel% NEQ 0 (
 	Call :InfoTitle
 	Echo Le Compte "%User%" n'existe pas !
@@ -326,7 +331,7 @@ If %errorlevel% NEQ 0 (
 )
 
 :: Cette boucle permet de lister noms et chemins des partages au format csv et de filtrer ceux avec le "$"
-For /f "Skip=2 Tokens=1,2,3 Delims=," %%a In ('wmic share get name^,path /format:csv ^| findstr /i /l /v "$"') Do (
+For /f "Skip=2 Tokens=1,2,3 Delims=," %%a In ('wmic.exe share get name^,path /format:csv ^| findstr /i /l /v "$"') Do (
 	If "%%a" NEQ "" Call :Add2Share "%%b" "%%c"
 )
 
@@ -354,17 +359,18 @@ Set SharePath=%~2
 :: Astuce pour supprimer le backslash sur partage racine (x:\ => x:)
 If "%SharePath:~-1,1%"=="\" Set SharePath=%SharePath:~0,-1%
 
+
 :YesOrNo
 Cls
 Color 0F
 Echo Nom du partage    : %ShareName%
 Echo Chemin du partage : %SharePath%
 Echo.
-Set /P Ret=  Ajouter l'utilisateur "%User%" au partage ci-dessus (o/n)?
-Echo.
-If /I "%Ret%" EQU "o" Goto :Add2ShareYes
-If /I "%Ret%" EQU "n" Goto :Eof
+Choice /C on /M "Ajouter l'utilisateur "%User%" au partage ci-dessus ? "
+If ERRORLEVEL 2 Goto :Eof
+If ERRORLEVEL 1 Goto :Add2ShareYes
 Goto :YesOrNo
+
 
 :Add2ShareYes
 Echo.&Echo.
@@ -373,11 +379,11 @@ Echo Ajout de l'utilisateur "%User%" au partage "%ShareName%"
 
 Echo.&Echo.
 Echo Attribution des droits sur le chemin du partage :
-%IcaclsExe% "%SharePath%" /Grant "%User%":(OI)(CI)F /C
+Icacls.exe "%SharePath%" /Grant "%User%":(OI)(CI)F /C
 
 Echo.&Echo.
 Echo Test de l'attribution des droits :
-%IcaclsExe% "%SharePath%"|Findstr "%User%"
+Icacls.exe "%SharePath%"|Findstr "%User%"
 
 Echo.&Echo.
 If %ERRORLEVEL% EQU 0 (
@@ -400,7 +406,7 @@ Goto :Eof
 
 :RemoveUserOnShare
 Echo Test si l'utilisateur "%User%" a des droits sur le partage %1
-%IcaclsExe% "%SharePath%"|Findstr "%User%"
+Icacls.exe "%SharePath%"|Findstr "%User%"
 If %ERRORLEVEL% EQU 1 Goto :Eof
 
 Cls
@@ -415,7 +421,7 @@ Echo Suppression de l'utilisateur sur le partage :
 %SubinaclExe% /share "%ShareName%" /revoke="%User%"
 Echo.
 Echo Suppression des droits de l'utilisateur sur le dossier :
-%IcaclsExe% "%SharePath%" /remove "%User%" /T
+Icacls.exe "%SharePath%" /remove "%User%" /T
 Echo.
 Goto :Eof
 
@@ -430,6 +436,7 @@ If Not Exist %SubinaclExe% (
 	Exit
 )
 Goto :Eof
+
 
 :SuccessTitle
 	@Echo 
@@ -479,5 +486,6 @@ Echo Appuyez sur une touche pour continuer ou quitter.
 Echo.
 Pause>NUL
 Goto :Eof
+
 
 :Eof

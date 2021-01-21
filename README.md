@@ -1,6 +1,6 @@
 # AddUser2Shares.cmd
 
-Version 1.4 du 13/12/2020 - Par Tlem33
+Version 1.5 du 13/12/2020 - Par Tlem33
 https://github.com/Tlem33/AddUser2Shares
 
 ***
