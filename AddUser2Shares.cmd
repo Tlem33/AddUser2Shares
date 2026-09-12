@@ -3,7 +3,7 @@
 :: système et/ou sur un ou plusieurs partages ainsi que
 :: les informations d'identification pour le client.
 ::
-:: Version 1.2 du 02-09-2018
+:: Version 1.3 du 10-03-2020
 ::
 :: Lire le fichier LisezMoi.txt pour plus d'informations.
 ::
@@ -14,14 +14,15 @@ Cls
 :: ================================================================================
 ::                               CONFIGURATION
 :: ================================================================================
-:: Entrez ici les paramètres du compte de l'utilisateur.
+:: Entrez ici les paramètres du compte de l'utilisateur et du serveur
 Set User=Nom_Utilisateur
 Set Passwd=Mot_De_Passe
 Set FullName=Nom_Complet_Utilisateur
+Set Server=Nom_PC_Distant
 :: ================================================================================
 
 :: Version :
-Set Version=1.2
+Set Version=1.3
 
 :: Déclaration des variables d'exécutables avec chemin.
 Set SubinaclExe="%~DP0Res\subinacl.exe"
@@ -29,7 +30,7 @@ Set IcaclsExe="%WINDIR%\System32\Icacls.exe"
 Set NetExe="%WINDIR%\System32\Net.exe"
 Set RegExe="%WINDIR%\System32\Reg.exe"
 Set WmicExe="%WINDIR%\System32\wbem\Wmic.exe"
-
+Title=AddUser2Shares version %version%
 
 :: On appelle la fonction de tests
 Call :Tests
@@ -48,7 +49,7 @@ Echo                         º                              º
 Echo                         ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼
 Echo.
 Echo                         Utilisateur  : %User%
-Echo                         Mot de passe : %Passwd%
+Echo                         Mot de passe : %Pass%
 Echo.
 Echo.
 Echo   Veuillez s‚lectionner l'action … r‚aliser :
@@ -57,23 +58,61 @@ Echo          1 - Ajouter l'utilisateur au systŠme
 Echo.
 Echo          2 - Ajouter l'utilisateur sur un partage
 Echo.
-Echo          3 - Supprimer l'utilisateur
+Echo          3 - Supprimer l'utilisateur du systŠme
 Echo.
-Echo          4 - Raccourcis utiles
+Echo          4 - Ajout des informations d'identification
 Echo.
-Echo          5 - Quitter
+Echo          5 - Raccourcis utiles
 Echo.
+Echo          6 - Quitter
 Echo.
-Set /P Ret=Entrez votre choix (1, 2, 3, 4 ou 5) : 
+Set /P Ret=Entrez votre choix (1, 2, 3, 4, 5 ou 6) :
 If /I "%Ret%" EQU "1" Goto :AddUser
 If /I "%Ret%" EQU "2" Goto :Add2Share
 If /I "%Ret%" EQU "3" Goto :DelUser
 If /I "%Ret%" EQU "4" Goto :Menu2
-If /I "%Ret%" EQU "5" Exit
+If /I "%Ret%" EQU "5" Goto :Menu3
+If /I "%Ret%" EQU "6" Exit
 Goto :Menu1
 
 
 :Menu2
+Cls
+Color 0F
+Echo                         ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»
+Echo                         º                              º
+Echo                         º      AddUser2Shares v%version%     º
+Echo                         º                              º
+Echo                         ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼
+Echo.
+Echo.
+Echo.
+Echo.
+Echo.
+Echo   Veuillez s‚lectionner l'action … r‚aliser :
+Echo.
+Echo          1 - Ajouter les informations d'identification pour %User%
+Echo.
+Echo          2 - Supprimer les informations d'identification pour %User%
+Echo.
+Echo          3 - Afficher la liste des informations d'identification
+Echo.
+Echo          4 - Lancer l'utilitaire de gestion des informations d'identification
+Echo.
+Echo          5 - Menu pr‚c‚dent
+Echo.
+Echo          6 - Quitter
+Echo.
+Set /P Ret=Entrez votre choix (1, 2, 3, 4 ou 5) :
+If /I "%Ret%" EQU "1" Goto :CredentialAdd
+If /I "%Ret%" EQU "2" Goto :CredentialDel
+If /I "%Ret%" EQU "3" Goto :CredentialVue
+If /I "%Ret%" EQU "4" Goto :CredentialManager
+If /I "%Ret%" EQU "5" Goto Menu1
+If /I "%Ret%" EQU "6" Exit
+Goto :Menu2
+
+:Menu3
 Cls
 Color 0F
 Echo                         ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»
@@ -98,14 +137,66 @@ Echo          4 - Menu pr‚c‚dent
 Echo.
 Echo          5 - Quitter
 Echo.
-Echo.
-Set /P Ret=Entrez votre choix (1, 2, 3, 4 ou 5) : 
+Set /P Ret=Entrez votre choix (1, 2, 3, 4 ou 5) :
 If /I "%Ret%" EQU "1" Start "lusrmgr.msc" lusrmgr.msc
 If /I "%Ret%" EQU "2" Start "fsmgmt.msc" fsmgmt.msc
 If /I "%Ret%" EQU "3" Start "ncpa.cpl" ncpa.cpl
 If /I "%Ret%" EQU "4" Goto :Menu1
 If /I "%Ret%" EQU "5" Exit
+Goto :Menu3
+
+
+:CredentialVue
+Cls
+cmdkey /list
+Echo Appuyez sur une touche pour revenir au menu.
+Pause>Nul
 Goto :Menu2
+
+
+:CredentialManager
+Call control /name Microsoft.CredentialManager
+Goto :Menu2
+
+
+:CredentialAdd
+Cls
+If "%Server%"=="" Set Server=Serveur
+Set /P Server=Veuillez indiquer le nom du serveur (Par d‚faut : %Server%) :
+Echo.
+Echo     R‚capitulatif des informations d'identifications
+Echo.
+Echo          Utilisateur    : %User%
+Echo          Mot de passe   : %Pass%
+Echo          Nom du Serveur : %Server%
+Echo.
+Echo Appuyez sur une touche pour confirmer l'ajout de ces informations.
+Pause>Nul
+cmdkey /add:%Server% /user:%User% /pass:%Pass%
+Echo.
+Echo Op‚ration termin‚e.
+Echo Appuyez sur une touche pour revenir au menu.
+Pause>Nul
+Goto Menu2
+
+
+:CredentialDel
+Cls
+Echo.
+Echo     Suppression des informations d'identifications pour
+Echo.
+Echo          Utilisateur    :
+Echo          Mot de passe   :
+Echo          Nom du Serveur : %Server%
+Echo.
+Echo Appuyez sur une touche pour confirmer la suppression.
+Pause>Nul
+cmdkey /delete:%Server%
+Echo.
+Echo Op‚ration termin‚e.
+Echo Appuyez sur une touche pour revenir au menu.
+Pause>Nul
+Goto Menu2
 
 
 :AddUser
@@ -123,7 +214,7 @@ Echo.
 Echo Appuyez sur une touche pour confirmer l'ajout de l'utilisateur :
 Echo.
 Echo                Utilisateur  : %User%
-Echo                Mot de passe : %Passwd%
+Echo                Mot de passe : %Pass%
 Echo.
 Echo Cet utilisateur sera rajouter sur ce PC et dans le groupe administrateur.
 Echo.
@@ -138,7 +229,7 @@ Call :Pause
 
 :: Ajout du compte utilisateur - Pas d'expiration et ne peux pas changer le mot de passe.
 Echo Ajout de l'utilisateur "%User%" :
-%NetExe% User "%User%" "%Passwd%" /ADD /FULLNAME:"%FullName%" /EXPIRES:NEVER /PASSWORDCHG:NO
+%NetExe% User "%User%" "%Pass%" /ADD /FULLNAME:"%FullName%" /EXPIRES:NEVER /PASSWORDCHG:NO
 :: Ajout de l'utilisateur "%User%" dans le groupe Administrateur
 Echo Ajout de l'utilisateur dans le groupe "Administrateur" :
 %NetExe% localgroup Administrateurs "%User%" /ADD
@@ -274,7 +365,7 @@ Color 0F
 Echo Nom du partage    : %ShareName%
 Echo Chemin du partage : %SharePath%
 Echo.
-Set /P Ret=  Ajouter l'utilisateur "%User%" au partage ci-dessus (o/n)? 
+Set /P Ret=  Ajouter l'utilisateur "%User%" au partage ci-dessus (o/n)?
 Echo.
 If /I "%Ret%" EQU "o" Goto :Add2ShareYes
 If /I "%Ret%" EQU "n" Goto :Eof
