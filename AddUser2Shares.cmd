@@ -1,8 +1,8 @@
-:: AddUser2Shares.cmd créé par Tlem33.
+:: AddUser2Shares.cmd créé par Tlem33
 :: Ce batch ajoute ou supprime un utilisateur dans le
 :: système et/ou sur un ou plusieurs partages. 
 ::
-:: Version 1.0.1 du 01-06-2018
+:: Version 1.1 du 17-08-2018
 ::
 
 @Echo Off
@@ -289,7 +289,7 @@ If Not Exist %SubinaclExe% (
 Goto :Eof
 
 :SuccessTitle
-	@Echo  
+	@Echo 
 	Cls
 	Color 0A
 	Echo.
@@ -304,7 +304,7 @@ Goto :Eof
 
 
 :ErrorTitle
-	@Echo  
+	@Echo 
 	Cls
 	Color 0C
 	Echo.
