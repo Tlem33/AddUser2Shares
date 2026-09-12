@@ -2,7 +2,7 @@
 :: Ce batch ajoute ou supprime un utilisateur dans le
 :: système et/ou sur un ou plusieurs partages. 
 ::
-:: Version 1.0 du 01-06-2018
+:: Version 1.0.1 du 01-06-2018
 ::
 
 @Echo Off
@@ -57,7 +57,7 @@ Echo.
 Echo          4 - Quitter
 Echo.
 Echo.
-Set /P Ret=Entrez votre choix (1, 2, 3) :
+Set /P Ret=Entrez votre choix (1, 2, 3) : 
 If /I "%Ret%" EQU "1" Goto :AddUser
 If /I "%Ret%" EQU "2" Goto :Add2Share
 If /I "%Ret%" EQU "3" Goto :DelUser
@@ -71,18 +71,18 @@ Cls
 Net User "%User%">Nul 2>Nul
 If %errorlevel% EQU 0 (
 	Call :InfoTitle
-	Echo  Le Compte %User% existe d‚ja !
+	Echo Le Compte %User% existe d‚ja !
 	Call :Pause
 	Goto :Menu
 )
 
 Echo.
-Echo  Appuyez sur une touche pour confirmer l'ajout de l'utilisateur :
+Echo Appuyez sur une touche pour confirmer l'ajout de l'utilisateur :
 Echo.
 Echo                Utilisateur  : %User%
 Echo                Mot de passe : %Passwd%
 Echo.
-Echo  Cet utilisateur sera rajouter sur ce PC et dans le groupe administrateur.
+Echo Cet utilisateur sera rajouter sur ce PC et dans le groupe administrateur.
 Call :Pause
 
 :: Ajout du compte utilisateur - Pas d'expiration et ne peux pas changer le mot de passe.
@@ -103,16 +103,16 @@ Call :Pause
 %NetExe% User "%User%">Nul 2>Nul
 If %errorlevel% NEQ 0 (
 	Call :ErrorTitle
-	Echo  Compte %User% non cr‚‚ !
+	Echo Compte %User% non cr‚‚ !
 	Echo.
-	Echo  V‚rifiez que vous avez lanc‚ ce programme avec les droits
-	Echo  Administrateur, sinon veuillez cr‚er le compte manuellement.
+	Echo V‚rifiez que vous avez lanc‚ ce programme avec les droits
+	Echo Administrateur, sinon veuillez cr‚er le compte manuellement.
 	Call :Pause
 	Exit
 )
 
 Call :SuccessTitle
-Echo  L'utilisateur %User% a bien ‚t‚ ajout‚.
+Echo L'utilisateur %User% a bien ‚t‚ ajout‚.
 Call :Pause
 
 Goto :Menu
@@ -123,19 +123,24 @@ Cls
 Net User "%User%">Nul 2>Nul
 If %errorlevel% NEQ 0 (
 	Call :InfoTitle
-	Echo  Le Compte %User% n'existe pas !
+	Echo Le Compte %User% n'existe pas !
 	Call :Pause
 	Goto :Menu
 )
 
 Echo.
-Echo  Appuyez sur une touche pour confirmer la suppression de l'utilisateur :
+Echo Appuyez sur une touche pour confirmer la suppression de l'utilisateur :
 Echo.
 Echo                Utilisateur  : %User%
 Echo.
 Echo.
-Echo  Ce compte utilisateur sera aussi supprim‚ de tous les partages du systŠme.
+Echo Ce compte utilisateur sera aussi supprim‚ de tous les partages du systŠme.
 Call :Pause
+
+:: Cette boucle permet de lister noms et chemins des partages au format csv et de filtrer ceux avec le "$"
+For /f "Skip=2 Tokens=1,2,3 Delims=," %%a In ('wmic share get name^,path /format:csv ^| findstr /i /l /v "$"') Do (
+	If "%%a" NEQ "" Call :RemoveUserOnShare "%%b" "%%c"
+)
 
 :: Suppression du compte utilisateur
 Echo Suppression de l'utilisateur.
@@ -146,10 +151,6 @@ Echo Suppression de la cl‚ "%User%" dans "SpecialAccounts"
 REG DELETE "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon\SpecialAccounts\UserList" /V "%User%" /F
 Echo.
 
-:: Cette boucle permet de lister noms et chemins des partages au format csv et de filtrer ceux avec le "$"
-For /f "Skip=2 Tokens=1,2,3 Delims=," %%a In ('wmic share get name^,path /format:csv ^| findstr /i /l /v "$"') Do (
-	If "%%a" NEQ "" Call :RemoveUserOnShare "%%b" "%%c"
-)
 :: Pause de 3 secondes.
 Ping -n 3 127.0.0.1>Nul
 
@@ -166,7 +167,7 @@ If %errorlevel% EQU 0 (
 )
 
 Call :SuccessTitle
-Echo  L'utilisateur %User% a bien ‚t‚ supprim‚.
+Echo L'utilisateur %User% a bien ‚t‚ supprim‚.
 Call :Pause
 Goto :Menu
 
@@ -177,7 +178,7 @@ Cls
 Net User "%User%">Nul 2>Nul
 If %errorlevel% NEQ 0 (
 	Call :InfoTitle
-	Echo  Le Compte %User% n'existe pas !
+	Echo Le Compte %User% n'existe pas !
 	Call :Pause
 	Goto :Menu
 )
@@ -190,53 +191,88 @@ For /f "Skip=2 Tokens=1,2,3 Delims=," %%a In ('wmic share get name^,path /format
 :: Si aucun partage trouvé
 If %Count%==0 (
 	Call :ErrorTitle
-	Echo  Aucun partage n'a ‚t‚ trouv‚ sur ce systŠme !
+	Echo Aucun partage n'a ‚t‚ trouv‚ sur ce systŠme !
 	Call :Pause
 	Exit
 )
 
+Echo.&Echo.
 Echo Ajout de l'utilisateur %User% sur le/les partages termin‚.
-Goto :Pause
+Call :Pause
 Goto :Menu
 
 
 :Add2Share
 :: Compte le nombre de partage trouvé
 Set /A Count+=1
-Set ShareName=%1
-Set SharePath=%2
+Set lng=0
+Set ShareName=%~1
+Set SharePath=%~2
 
+:: Astuce pour supprimer le backslash sur partage racine (x:\ => x:)
+If "%SharePath:~-1,1%"=="\" Set SharePath=%SharePath:~0,-1%
 
 :YesOrNo
 Cls
-Echo Nom du partage    : %ShareName:"=%
-Echo Chemin du partage : %SharePath:"=%
+Color 0F
+Echo Nom du partage    : %ShareName%
+Echo Chemin du partage : %SharePath%
 Echo.
-Set /P Ret=Ajouter l'utilisateur %User% au partage ci-dessus (o/n)?
+Set /P Ret=  Ajouter l'utilisateur %User% au partage ci-dessus (o/n)? 
+Echo.
 If /I "%Ret%" EQU "o" Goto :Add2ShareYes
 If /I "%Ret%" EQU "n" Goto :Eof
 Goto :YesOrNo
 
 :Add2ShareYes
-Echo.
-Echo Ajout de l'utilisateur %User% au partage %ShareName%
-%SubinaclExe% /share %ShareName% /grant="%User%"=F
-Echo.
-Echo Attribution des droits sur le chemin du partage :
-%IcaclsExe% %SharePath% /grant "%User%":(OI)(CI)F
+Echo.&Echo.
+Echo Ajout de l'utilisateur %User% au partage "%ShareName%"
+%SubinaclExe% /share "%ShareName%" /grant="%User%"=F
 
-Echo.
-Echo.
-Echo Ajout termin‚. V‚rifiez les messages ci-dessus pour
-Echo savoir si les commandes se sont bien termin‚es.
+Echo.&Echo.
+Echo Attribution des droits sur le chemin du partage :
+%IcaclsExe% "%SharePath%" /Grant "%User%":(OI)(CI)F /C
+
+Echo.&Echo.
+Echo Test de l'attribution des droits :
+%IcaclsExe% "%SharePath%"|Findstr "%User%"
+
+Echo.&Echo.
+If %ERRORLEVEL% EQU 0 (
+	Color 0A
+	Echo                  ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»
+	Echo                  º                                           º
+	Echo                  º        Droits attribu‚s avec succ‚s       º
+	Echo                  º                                           º
+	Echo                  ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼
+) Else (
+	Color 0C
+	Echo                  ÉÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ»
+	Echo                  º                                           º
+	Echo                  º     Echec de l'attribution des droits     º
+	Echo                  º                                           º
+	Echo                  ÈÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼
+)
+Echo.&Echo.
+Echo V‚rifiez les messages ci-dessus pour connaitre les d‚tails de l'op‚ration.
 Call :Pause
 Goto :Eof
 
 
 :RemoveUserOnShare
+Echo Test si l'utilisateur "%User%" a des droits sur le partage %1
+%IcaclsExe% "%SharePath%"|Findstr "%User%"
+If %ERRORLEVEL% EQU 1 Goto :Eof
+
+Cls
 Echo Suppression des droits pour "%User%"
 Echo sur le dossier %2 du partage %1
-%IcaclsExe% %2 /remove "%User%" /T
+
+Set SharePath=%~2
+:: Astuce pour supprimer le backslash sur partage racine (x:\ => x:)
+If "%SharePath:~-1,1%"=="\" Set SharePath=%SharePath:~0,-1%
+
+%IcaclsExe% "%SharePath%" /remove "%User%" /T
 Echo.
 Goto :Eof
 
@@ -245,15 +281,15 @@ Goto :Eof
 :: Fonctions pour les tests divers avant exécution.
 If Not Exist %SubinaclExe% (
 	Call :ErrorTitle
-	Echo  Le programme Subinacl.exe n'a pas ‚t‚ trouv‚.
-	Echo  Celui-ci est n‚cessaire pour l'ajout aux partages.
+	Echo Le programme Subinacl.exe n'a pas ‚t‚ trouv‚.
+	Echo Celui-ci est n‚cessaire pour l'ajout aux partages.
 	Call :Pause
 	Exit
 )
 Goto :Eof
 
 :SuccessTitle
-	@Echo 
+	@Echo  
 	Cls
 	Color 0A
 	Echo.
@@ -268,7 +304,7 @@ Goto :Eof
 
 
 :ErrorTitle
-	@Echo 
+	@Echo  
 	Cls
 	Color 0C
 	Echo.
@@ -298,7 +334,7 @@ Goto :Eof
 
 :Pause
 ::Echo. & Echo. & Echo. & Echo.
-Echo  Appuyez sur une touche pour continuer ou quitter.
+Echo Appuyez sur une touche pour continuer ou quitter.
 Echo.
 Pause>NUL
 Goto :Eof
