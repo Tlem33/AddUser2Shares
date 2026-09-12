@@ -10,4 +10,3 @@ Rassurez-vous, l'ensemble du projet a été remis en place : le code actuel ains
 **Note importante :** En raison de la méthode de nettoyage et de reconstruction obligatoire de l'historique Git, les commits ont perdu leurs métadonnées d'origine. C'est pourquoi **toutes les versions affichent désormais une date identique**, correspondant au moment de la réinstallation. 
 
 Merci de votre compréhension.
-
