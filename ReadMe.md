@@ -1,6 +1,6 @@
 # AddUser2Shares.cmd
 
-Version 1.4 du 13-12-2020- Par Tlem33
+Version 1.5 du 21-01-2021 - Par Tlem33
 https://github.com/Tlem33/AddUser2Shares
 
 *****
@@ -100,5 +100,13 @@ OU AUTRES DISPOSITIONS DU LOGICIEL.
 13-12-2020 - Version 1.4
 
                 - Ajout du fichier README.MD
-                - LisezMoi.txt devient ReadMe.md
+                - LisezMoi.txt devient LisezMoi.md
                 - Déplacement du binaire dans le sous dossier \bin
+
+21-01-2021 - Version 1.5
+
+                - Modification de l'entête de AddUser2Shares.cmd
+                - Suppression de variables inutiles
+                - Remplacement de la commande Set /P par Choice
+                - Ajout de l'extension des programmes (.exe) et modifications mineures
+
